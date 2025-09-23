@@ -15,7 +15,7 @@ Exchange Rate - это Telegram-бот, который позволяет пол
 - Клонируйте репозиторий:
 
 ```bash
-git git@github.com:ivanlbdv/exchange_rate_bot.git
+git clone git@github.com:ivanlbdv/exchange_rate_bot.git
 cd exchange_rate_bot
 ```
 - Создайте и активируйте виртуальное окружение:
