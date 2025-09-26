@@ -6,6 +6,7 @@ import telebot
 from dotenv import load_dotenv
 from telebot import types
 
+from utils import get_exchange_rate, get_exchange_rate_converter
 
 load_dotenv()
 
@@ -81,9 +82,16 @@ def get_date_curr_exchange_rate(message, valute_date):
                          f'{get_exchange_rate(valute_date["valute"], valute_date["date_rate"])}'
                          )
     except:
-        # TODO Сделать проверку на корректно введенную дату,
-        # учитывая количество дней в месяце.
-        pattern = r'\d{2}\.\d{2}\.\d{4}'
+        pattern = re.compile(
+            r'^('
+            r'(0[1-9]|1[0-9]|2[0-8])\.(0[1-9]|1[0-2])\.\d{4}|'
+            r'(29|30)\.(0[13578]|1[02])\.\d{4}|'
+            r'31\.(0[13578]|1[02])\.\d{4}|'
+            r'29\.02\.(?:'
+                r'(?:[02468][048]|[13579][26])00|'
+                r'(?:\d\d)(?:[02468][048]|[13579][26])'
+            r'))$'
+        )
         if not re.fullmatch(pattern, message.text):
             bot.send_message(message.chat.id, (
                 "Вы указали несуществующую дату.\n\n"
@@ -206,72 +214,6 @@ def get_direction_converter(message, valute_date_value_dir):
             "\n\n"
             "Для повторения запроса выберите действие из меню."
             ))
-
-
-def get_exchange_rate(val, date) -> str:
-    import xml.etree.ElementTree as ET
-
-    import requests
-    value = float(
-        ET.fromstring(requests.get(f'https://www.cbr.ru/scripts/XML_daily.asp?date_req={date}').text)
-        .find(f"./Valute[CharCode='{val}']/Value")
-        .text.replace(',', '.')
-    )
-    nominal = int(float(
-        ET.fromstring(requests.get(f'https://www.cbr.ru/scripts/XML_daily.asp?date_req={date}').text)
-        .find(f"./Valute[CharCode='{val}']/Nominal")
-        .text.replace(',', '.')
-    ))
-    name = str(
-        ET.fromstring(requests.get(f'https://www.cbr.ru/scripts/XML_daily.asp?date_req={date}').text)
-        .find(f"./Valute[CharCode='{val}']/Name")
-        .text.replace(',', '.')
-    )
-
-    if nominal == 1:
-        return (
-            f'Курс {val} на {date} (ЦБ РФ):'
-            "\n"
-            f'{nominal} {name} = {value} RUB.'
-            "\n\nДля повторения запроса выберите действие из меню."
-            )
-    else:
-        value_div_nominal = round(value / nominal, 2)
-        return (
-            f'Курс {val} на {date} (ЦБ РФ):'
-            "\n"
-            f'{nominal} {name} = {value} RUB'
-            "\n"
-            f'(1 {val} ≈ {value_div_nominal} RUB).'
-            "\n\nДля повторения запроса выберите действие из меню."
-            )
-
-
-def get_exchange_rate_converter(val, date) -> float:
-    import xml.etree.ElementTree as ET
-
-    import requests
-    value = float(
-        ET.fromstring(requests.get(f'https://www.cbr.ru/scripts/XML_daily.asp?date_req={date}').text)
-        .find(f"./Valute[CharCode='{val}']/Value")
-        .text.replace(',', '.')
-    )
-    nominal = int(float(
-        ET.fromstring(requests.get(f'https://www.cbr.ru/scripts/XML_daily.asp?date_req={date}').text)
-        .find(f"./Valute[CharCode='{val}']/Nominal")
-        .text.replace(',', '.')
-    ))
-    name = str(
-        ET.fromstring(requests.get(f'https://www.cbr.ru/scripts/XML_daily.asp?date_req={date}').text)
-        .find(f"./Valute[CharCode='{val}']/Name")
-        .text.replace(',', '.')
-    )
-    if nominal == 1:
-        return value
-    else:
-        value_div_nominal = value / nominal
-        return value_div_nominal
-
 
 
 @bot.message_handler(content_types=['text'])
