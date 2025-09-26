@@ -40,7 +40,7 @@ def get_exchange_rate(val, date) -> str:
             "\n\nДля повторения запроса выберите действие из меню."
             )
     else:
-        value_div_nominal = round(value / nominal, 2)
+        value_div_nominal = round(value / nominal, 4)
         return (
             f'Курс {val} на {date} (ЦБ РФ):'
             "\n"

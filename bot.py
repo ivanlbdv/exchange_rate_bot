@@ -68,7 +68,7 @@ def get_valute_curr_exchange_rate(message):
         f'{valute_date["valute"]}.'
         "\n\n"
         "Выберите доступные варианты дат ниже "
-        "или введите свой в формате ДД.ММ.ГГГГ."
+        "или введите свой в формате 'ДД.ММ.ГГГГ'."
         ), reply_markup=markup)
     bot.register_next_step_handler(msg,
                                    get_date_curr_exchange_rate,
@@ -77,33 +77,35 @@ def get_valute_curr_exchange_rate(message):
 
 def get_date_curr_exchange_rate(message, valute_date):
     valute_date['date_rate'] = message.text
+    pattern = re.compile(
+        r'^('
+        r'(0[1-9]|1[0-9]|2[0-8])\.(0[1-9]|1[0-2])\.\d{4}|'
+        r'(29|30)\.(0[13578]|1[02])\.\d{4}|'
+        r'31\.(0[13578]|1[02])\.\d{4}|'
+        r'29\.02\.(?:'
+        r'(?:[02468][048]|[13579][26])00|'
+        r'(?:\d\d)(?:[02468][048]|[13579][26])'
+        r'))$'
+    )
     try:
+        if not re.fullmatch(pattern, message.text):
+            raise ValueError('Некорректный формат даты.')
+
         bot.send_message(message.chat.id,
                          f'{get_exchange_rate(valute_date["valute"], valute_date["date_rate"])}'
                          )
     except ValueError:
-        pattern = re.compile(
-            r'^('
-            r'(0[1-9]|1[0-9]|2[0-8])\.(0[1-9]|1[0-2])\.\d{4}|'
-            r'(29|30)\.(0[13578]|1[02])\.\d{4}|'
-            r'31\.(0[13578]|1[02])\.\d{4}|'
-            r'29\.02\.(?:'
-            r'(?:[02468][048]|[13579][26])00|'
-            r'(?:\d\d)(?:[02468][048]|[13579][26])'
-            r'))$'
-        )
-        if not re.fullmatch(pattern, message.text):
-            bot.send_message(message.chat.id, (
-                "Вы указали несуществующую дату.\n\n"
-                "Для повторения запроса выберите действие из меню."
-                ))
-        else:
-            bot.send_message(message.chat.id, (
-                "Вы указали несуществующий код валюты или курс "
-                f'{valute_date["valute"]} на {valute_date["date_rate"]}'
-                " ЦБ РФ еще не установлен.\n\n"
-                "Для повторения запроса выберите действие из меню."
-                ))
+        bot.send_message(message.chat.id, (
+            "Вы указали несуществующую дату.\n\n"
+            "Для повторения запроса выберите действие из меню."
+            ))
+    except Exception:
+        bot.send_message(message.chat.id, (
+            "Вы указали несуществующий код валюты или курс "
+            f'{valute_date["valute"]} на {valute_date["date_rate"]}'
+            " ЦБ РФ еще не установлен.\n\n"
+            "Для повторения запроса выберите действие из меню."
+            ))
 
 
 @bot.message_handler(commands=['converter'])
@@ -154,7 +156,7 @@ def get_valute_converter(message):
         f'Укажите дату курса {valute_date_value_dir["valute"]}'
         " для конвертации валюты.\n\n"
         "Выберите доступные варианты дат ниже "
-        "или введите свой в формате ДД.ММ.ГГГГ."
+        "или введите свой в формате 'ДД.ММ.ГГГГ'."
         ), reply_markup=markup)
     bot.register_next_step_handler(
         msg, get_date_converter,
@@ -164,12 +166,30 @@ def get_valute_converter(message):
 
 def get_date_converter(message, valute_date_value_dir):
     valute_date_value_dir['date_rate'] = message.text
-    msg = bot.send_message(message.chat.id, 'Укажите сумму для конвертации.')
-    bot.register_next_step_handler(
-        msg,
-        get_value_converter,
-        valute_date_value_dir
+    pattern = re.compile(
+        r'^('
+        r'(0[1-9]|1[0-9]|2[0-8])\.(0[1-9]|1[0-2])\.\d{4}|'
+        r'(29|30)\.(0[13578]|1[02])\.\d{4}|'
+        r'31\.(0[13578]|1[02])\.\d{4}|'
+        r'29\.02\.(?:'
+        r'(?:[02468][048]|[13579][26])00|'
+        r'(?:\d\d)(?:[02468][048]|[13579][26])'
+        r'))$'
     )
+    try:
+        if not re.fullmatch(pattern, message.text):
+            raise ValueError('Некорректный формат даты.')
+        msg = bot.send_message(message.chat.id, 'Укажите сумму для конвертации.')
+        bot.register_next_step_handler(
+            msg,
+            get_value_converter,
+            valute_date_value_dir
+        )
+    except ValueError:
+        bot.send_message(message.chat.id, (
+            "Вы указали несуществующую дату.\n\n"
+            "Для повторения запроса выберите действие из меню."
+            ))
 
 
 def get_value_converter(message, valute_date_value_dir):
@@ -202,16 +222,24 @@ def get_value_converter(message, valute_date_value_dir):
 
 def get_direction_converter(message, valute_date_value_dir):
     valute_date_value_dir['dir'] = message.text
-    if valute_date_value_dir['dir'] == f'RUB  >>  {valute_date_value_dir["valute"]}':
+    try:
+        if valute_date_value_dir['dir'] == f'RUB  >>  {valute_date_value_dir["valute"]}':
+            bot.send_message(message.chat.id, (
+                f'{valute_date_value_dir["value"]} RUB = {round(float(valute_date_value_dir["value"]) / get_exchange_rate_converter(valute_date_value_dir["valute"], valute_date_value_dir["date_rate"]), 4)} {valute_date_value_dir["valute"]}.'
+                "\n\n"
+                "Для повторения запроса выберите действие из меню."
+                ))
+        if valute_date_value_dir['dir'] == f'{valute_date_value_dir["valute"]}  >>  RUB':
+            bot.send_message(message.chat.id, (
+                f'{valute_date_value_dir["value"]} {valute_date_value_dir["valute"]} = {round(float(valute_date_value_dir["value"]) * get_exchange_rate_converter(valute_date_value_dir["valute"], valute_date_value_dir["date_rate"]), 4)} RUB.'
+                "\n\n"
+                "Для повторения запроса выберите действие из меню."
+                ))
+    except AttributeError:
         bot.send_message(message.chat.id, (
-            f'{valute_date_value_dir["value"]} RUB = {round(float(valute_date_value_dir["value"]) / get_exchange_rate_converter(valute_date_value_dir["valute"], valute_date_value_dir["date_rate"]), 4)} {valute_date_value_dir["valute"]}.'
-            "\n\n"
-            "Для повторения запроса выберите действие из меню."
-            ))
-    if valute_date_value_dir['dir'] == f'{valute_date_value_dir["valute"]}  >>  RUB':
-        bot.send_message(message.chat.id, (
-            f'{valute_date_value_dir["value"]} {valute_date_value_dir["valute"]} = {round(float(valute_date_value_dir["value"]) * get_exchange_rate_converter(valute_date_value_dir["valute"], valute_date_value_dir["date_rate"]), 4)} RUB.'
-            "\n\n"
+            "Вы указали несуществующий код валюты или курс "
+            f'{valute_date_value_dir["valute"]} на {valute_date_value_dir["date_rate"]}'
+            " ЦБ РФ еще не установлен.\n\n"
             "Для повторения запроса выберите действие из меню."
             ))
 
