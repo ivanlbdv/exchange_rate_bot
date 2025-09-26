@@ -1,5 +1,6 @@
 import os
 import re
+import xml.etree.ElementTree as ET
 from datetime import date, timedelta
 
 import telebot
@@ -242,6 +243,12 @@ def get_direction_converter(message, valute_date_value_dir):
             " ЦБ РФ еще не установлен.\n\n"
             "Для повторения запроса выберите действие из меню."
             ))
+    except ET.ParseError:
+        bot.send_message(message.chat.id, (
+            'Произошла ошибка при запросе к API. '
+            'Пожалуйста, попробуйте позже.\n\n'
+            'Для повторения запроса выберите действие из меню.'
+        ))
 
 
 @bot.message_handler(content_types=['text'])
