@@ -35,6 +35,12 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
+- Создайте файл .env и добавьте в него ваш токен:
+
+```   
+TOKEN=ваш_токен_телеграм_бота
+```
+
 ## Автор:
 Иван Лебедев
 https://github.com/ivanlbdv
