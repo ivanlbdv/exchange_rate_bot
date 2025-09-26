@@ -4,32 +4,24 @@ import requests
 
 
 def get_exchange_rate(val, date) -> str:
+    request = requests.get(f'https://www.cbr.ru/scripts/XML_daily.asp?date_req={date}')
     value = float(
-        ET.fromstring(
-            requests.get(
-                f'https://www.cbr.ru/scripts/XML_daily.asp?date_req={date}'
-            ).text
-        ).find(
-            f"./Valute[CharCode='{val}']/Value"
-        ).text.replace(',', '.')
+        ET.fromstring(request.text)
+        .find(f"./Valute[CharCode='{val}']/Value")
+        .text
+        .replace(',', '.')
     )
     nominal = int(float(
-        ET.fromstring(
-            requests.get(
-                f'https://www.cbr.ru/scripts/XML_daily.asp?date_req={date}'
-            ).text
-        ).find(
-            f"./Valute[CharCode='{val}']/Nominal"
-        ).text.replace(',', '.')
+        ET.fromstring(request.text)
+        .find(f"./Valute[CharCode='{val}']/Nominal")
+        .text
+        .replace(',', '.')
     ))
     name = str(
-        ET.fromstring(
-            requests.get(
-                f'https://www.cbr.ru/scripts/XML_daily.asp?date_req={date}'
-            ).text
-        ).find(
-            f"./Valute[CharCode='{val}']/Name"
-        ).text.replace(',', '.')
+        ET.fromstring(request.text)
+        .find(f"./Valute[CharCode='{val}']/Name")
+        .text
+        .replace(',', '.')
     )
 
     if nominal == 1:
@@ -52,24 +44,18 @@ def get_exchange_rate(val, date) -> str:
 
 
 def get_exchange_rate_converter(val, date) -> float:
+    request = requests.get(f'https://www.cbr.ru/scripts/XML_daily.asp?date_req={date}')
     value = float(
-        ET.fromstring(
-            requests.get(
-                f'https://www.cbr.ru/scripts/XML_daily.asp?date_req={date}'
-            ).text
-        ).find(
-            f"./Valute[CharCode='{val}']/Value"
-        ).text.replace(',', '.')
+        ET.fromstring(request.text)
+        .find(f"./Valute[CharCode='{val}']/Value")
+        .text
+        .replace(',', '.')
     )
-
     nominal = int(float(
-        ET.fromstring(
-            requests.get(
-                f'https://www.cbr.ru/scripts/XML_daily.asp?date_req={date}'
-            ).text
-        ).find(
-            f"./Valute[CharCode='{val}']/Nominal"
-        ).text.replace(',', '.')
+        ET.fromstring(request.text)
+        .find(f"./Valute[CharCode='{val}']/Nominal")
+        .text
+        .replace(',', '.')
     ))
     if nominal == 1:
         return value
