@@ -81,15 +81,15 @@ def get_date_curr_exchange_rate(message, valute_date):
         bot.send_message(message.chat.id,
                          f'{get_exchange_rate(valute_date["valute"], valute_date["date_rate"])}'
                          )
-    except:
+    except ValueError:
         pattern = re.compile(
             r'^('
             r'(0[1-9]|1[0-9]|2[0-8])\.(0[1-9]|1[0-2])\.\d{4}|'
             r'(29|30)\.(0[13578]|1[02])\.\d{4}|'
             r'31\.(0[13578]|1[02])\.\d{4}|'
             r'29\.02\.(?:'
-                r'(?:[02468][048]|[13579][26])00|'
-                r'(?:\d\d)(?:[02468][048]|[13579][26])'
+            r'(?:[02468][048]|[13579][26])00|'
+            r'(?:\d\d)(?:[02468][048]|[13579][26])'
             r'))$'
         )
         if not re.fullmatch(pattern, message.text):
